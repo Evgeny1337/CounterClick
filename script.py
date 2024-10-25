@@ -1,15 +1,21 @@
 import requests
 import json
-
-# 'https://t.me/lasteraevgen_bot'
-#  https://vk.cc/cD7p6a
+from urllib.parse import urlparse
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 def is_shorten_link(url):
-    pass
+    netloc = urlparse(url).netloc
+    if(netloc == 'vk.cc'):
+        return True
+    return False
+
+
 
 def count_clicks(token, link):
-    shortened_link = link.split('vk.cc/')[1]
-    params = {'access_token':token,'key':shortened_link,'v':'5.199'}
+    shortened_link = urlparse(link).path[1:]
+    params = {'access_token':token,'key':shortened_link,'v':'5.199','interval':'forever'}
     response = requests.get('https://api.vk.ru/method/utils.getLinkStats',params=params)
     response.raise_for_status()
     views = response.json()['response']['stats']
@@ -24,23 +30,24 @@ def shorten_link(token, url):
     
 
 def main():
-    token = ''
+    token =  os.environ.get('TOKEN')
     user_url = input("Введите ссылку:\n")
-    short_url = None
-    try:
-        short_url = shorten_link(token, user_url)
-    except Exception:
-        print("Возникла ошибка")
-    if(short_url):
-        print('Сокращенная ссылка: ',short_url)
-    try:
-        views = count_clicks(token,short_url)
-        print('Количество переходов: ',views[0]['views'])
-    except Exception:
-        print("Возникла ошибка")
+    if(is_shorten_link(user_url)):
+        try:
+            views = count_clicks(token,user_url)
+        except Exception:
+            print("Возникла ошибка")
+        if(views):
+            print('Количество переходов: ',views[0]['views'])
+    else:
+        try:
+            short_url = shorten_link(token, user_url)
+        except Exception:
+            print("Возникла ошибка")
+        if(short_url):
+            print('Сокращенная ссылка: ',short_url)
 
     
-
 
 if __name__ == '__main__':
     main()

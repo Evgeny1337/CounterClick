@@ -1,15 +1,12 @@
 import requests
 import json
 from urllib.parse import urlparse
-from dotenv import load_dotenv
+from dotenv import load_dotenv, find_dotenv
 import os
-load_dotenv()
 
 def is_shorten_link(url):
     netloc = urlparse(url).netloc
-    if(netloc == 'vk.cc'):
-        return True
-    return False
+    return netloc == 'vk.cc'
 
 
 
@@ -17,6 +14,8 @@ def count_clicks(token, link):
     shortened_link = urlparse(link).path[1:]
     params = {'access_token':token,'key':shortened_link,'v':'5.199','interval':'forever'}
     response = requests.get('https://api.vk.ru/method/utils.getLinkStats',params=params)
+    if "error" in response.json():
+        raise requests.exceptions.HTTPError()
     response.raise_for_status()
     views = response.json()['response']['stats']
     return views
@@ -24,28 +23,35 @@ def count_clicks(token, link):
 def shorten_link(token, url):
     params = {'access_token':token,'url':url,'v':'5.199','private':0}
     response = requests.get('https://api.vk.ru/method/utils.getShortLink',params=params)
+    if "error" in response.json():
+        raise requests.exceptions.HTTPError()
     response.raise_for_status()
     short_url = response.json()['response']['short_url']
     return short_url
     
 
 def main():
-    token =  os.environ.get('TOKEN')
+    load_dotenv()
+    try:
+        token =  os.environ['VK_TOKEN']
+    except KeyError:
+        raise KeyError('Переменная TOKEN не найдена в окружении')
     user_url = input("Введите ссылку:\n")
-    if(is_shorten_link(user_url)):
+    if is_shorten_link(user_url):
         try:
             views = count_clicks(token,user_url)
-        except Exception:
-            print("Возникла ошибка")
-        if(views):
+        except requests.exceptions.HTTPError:
+            raise requests.exceptions.HTTPError('Ошибка url')
+        else:
             print('Количество переходов: ',views[0]['views'])
     else:
         try:
             short_url = shorten_link(token, user_url)
-        except Exception:
-            print("Возникла ошибка")
-        if(short_url):
+        except requests.exceptions.HTTPError:
+            raise requests.exceptions.HTTPError('Ошибка url')
+        else:
             print('Сокращенная ссылка: ',short_url)
+            
 
     
 

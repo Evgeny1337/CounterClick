@@ -1,7 +1,7 @@
 import requests
 import json
 from urllib.parse import urlparse
-from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
 import os
 
 def is_shorten_link(url):
@@ -14,18 +14,18 @@ def count_clicks(token, link):
     shortened_link = urlparse(link).path[1:]
     params = {'access_token':token,'key':shortened_link,'v':'5.199','interval':'forever'}
     response = requests.get('https://api.vk.ru/method/utils.getLinkStats',params=params)
+    response.raise_for_status()
     if "error" in response.json():
         raise requests.exceptions.HTTPError()
-    response.raise_for_status()
     views = response.json()['response']['stats']
     return views
 
 def shorten_link(token, url):
     params = {'access_token':token,'url':url,'v':'5.199','private':0}
     response = requests.get('https://api.vk.ru/method/utils.getShortLink',params=params)
+    response.raise_for_status()
     if "error" in response.json():
         raise requests.exceptions.HTTPError()
-    response.raise_for_status()
     short_url = response.json()['response']['short_url']
     return short_url
     

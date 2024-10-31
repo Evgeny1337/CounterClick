@@ -34,7 +34,7 @@
 3. Установите необходимые зависимости:
 
    ```bash
-   pip install -r requirements.txts
+   pip install -r requirements.txt
    ```
 
 4. Сохраните токен VK ID API в переменные окружения:
